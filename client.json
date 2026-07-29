@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Order Status Dashboard</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding: 20px; max-width: 900px; margin: 0 auto; background: #fafafa; color: #333; }
+        h1 { text-align: center; margin-bottom: 40px; color: #111; }
+        .dashboard-grid { display: flex; flex-direction: column; gap: 15px; }
+        .client-card { background: white; padding: 20px; border-radius: 12px; border: 1px solid #e1e4e8; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        .order-name { font-size: 18px; font-weight: 600; margin-bottom: 5px; }
+        .status-badge { display: inline-block; padding: 6px 12px; border-radius: 20px; font-size: 14px; font-weight: 500; background: #e3f2fd; color: #0d47a1; }
+        .auspost-btn { background: #dc3545; color: white; text-decoration: none; padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: bold; display: inline-block; margin-top: 10px; }
+        .auspost-btn:hover { background: #c82333; }
+        .eta-text { font-size: 14px; color: #666; text-align: right; }
+    </style>
+</head>
+<body>
+
+    <h1>Client Order Dashboard</h1>
+    
+    <div class="dashboard-grid" id="publicList">
+        <!-- Orders will load here automatically -->
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // REPLACE WITH YOUR FIREBASE CONFIG (Same as admin)
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT.firebaseapp.com",
+            projectId: "YOUR_PROJECT_ID"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const ordersRef = collection(db, "orders");
+
+        // Load and display for clients (Newest first)
+        const q = query(ordersRef, orderBy("timestamp", "desc"));
+        onSnapshot(q, (snapshot) => {
+            const publicList = document.getElementById('publicList');
+            publicList.innerHTML = '';
+            
+            snapshot.forEach((docSnap) => {
+                const data = docSnap.data();
+                
+                // If there is an AusPost link, show the red button for it
+                let ausPostHTML = '';
+                if(data.ausPostLink) {
+                    ausPostHTML = `<br><a href="${data.ausPostLink}" target="_blank" class="auspost-btn">Track via AusPost</a>`;
+                }
+
+                publicList.innerHTML += `
+                    <div class="client-card">
+                        <div>
+                            <div class="order-name">${data.clientName}</div>
+                            <div class="status-badge">${data.status}</div>
+                            ${ausPostHTML}
+                        </div>
+                        <div class="eta-text">
+                            <strong>ETA:</strong><br>${data.eta}
+                        </div>
+                    </div>
+                `;
+            });
+        });
+    </script>
+</body>
+</html>
