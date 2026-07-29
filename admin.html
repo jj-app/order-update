@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Order Tracker</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            padding: 50px 20px;
+        }
+        .dashboard {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            width: 100%;
+            max-width: 500px;
+        }
+        h2 { margin-top: 0; color: #2c3e50; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; font-size: 14px;}
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        button:hover { background-color: #0056b3; }
+        .status-msg { margin-top: 15px; font-size: 14px; text-align: center; color: green; display: none;}
+    </style>
+</head>
+<body>
+
+    <div class="dashboard">
+        <h2>🔒 Dispatch Control</h2>
+        
+        <div class="form-group">
+            <label>Client Order ID (e.g., ORD-JULY-001)</label>
+            <input type="text" id="orderId" placeholder="Enter custom Order ID...">
+        </div>
+
+        <div class="form-group">
+            <label>Sanitized Status Update</label>
+            <select id="orderStatus">
+                <option value="Order Processed">Order Processed</option>
+                <option value="Departed Sorting Center - China">Departed Sorting Center - China</option>
+                <option value="In Transit to Destination Country">In Transit to Destination Country</option>
+                <option value="Arrived at Local Customs">Arrived at Local Customs</option>
+                <option value="Cleared Customs">Cleared Customs</option>
+                <option value="Out for Delivery">Out for Delivery</option>
+                <option value="Delivered">Delivered</option>
+            </select>
+        </div>
+
+        <button id="updateBtn">Push Update to Client</button>
+        <div class="status-msg" id="statusMsg">Order updated successfully!</div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
+        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAHD0_l3t-aTEdlE_28Bspluk7KpL2GAbw",
+            authDomain: "order-tracker-58390.firebaseapp.com",
+            projectId: "order-tracker-58390",
+            storageBucket: "order-tracker-58390.firebasestorage.app",
+            messagingSenderId: "599840735038",
+            appId: "1:599840735038:web:ce7938b2666e24d01c766f"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        document.getElementById('updateBtn').addEventListener('click', async () => {
+            const orderId = document.getElementById('orderId').value;
+            const status = document.getElementById('orderStatus').value;
+            const msgBox = document.getElementById('statusMsg');
+
+            if(!orderId) {
+                alert("Please enter a Client Order ID");
+                return;
+            }
+
+            try {
+                // This saves the data to a 'tracking' folder in your database
+                await setDoc(doc(db, "tracking", orderId), {
+                    status: status,
+                    lastUpdated: new Date().toISOString()
+                }, { merge: true });
+
+                msgBox.style.display = 'block';
+                setTimeout(() => msgBox.style.display = 'none', 3000);
+            } catch (e) {
+                console.error("Error adding document: ", e);
+                alert("Error saving! Did you enable Firestore Database in Test Mode?");
+            }
+        });
+    </script>
+</body>
+</html>
